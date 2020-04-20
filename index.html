@@ -1,0 +1,249 @@
+<DOCTYPE html>
+<html>
+<head>
+	<meta charset="UTF-8">
+	<title>Dice King</title>
+
+	<!--jQuery?-->
+	<!--Bootstrap?-->
+	<link rel='stylesheet' href='dice.css'>
+	<script type='application/javascript' src='https://code.jquery.com/jquery-3.5.0.slim.min.js'></script>
+
+	<script type='application/javascript'>
+		$(document).ready(function(){
+			init();
+		});
+
+
+		function die(){
+			this.value = 1;
+			this.saved = false;
+			this.committed = false;
+			this.scored = false;
+		}
+
+		var dice = [];
+		var saved = 0;
+
+		function init() {
+			console.log("Dice King initialized");
+
+			for(x = 0; x < 6; x++){
+				dice.push(new die())
+			}
+
+			roll(dice);
+		}
+
+		function userScore() {
+			evaluateScore(dice);
+		}
+
+		function userRoll() {
+			savedCount = 0;
+			$.each(dice, function(i,die){
+				if(die.saved){
+					savedCount++;
+				}
+			});
+
+			if(saved === savedCount) {
+				log("User must save at least 1 die to roll again");
+				return
+			}
+
+			roll(dice);
+
+		}
+
+		function log(msg){
+			$('#feedback').html(msg);
+		}
+
+		function getRandomInt(max) {
+		  return Math.floor(Math.random() * Math.floor(max));
+		}
+
+		function evaluateScore(dice){
+
+			var straight = [1,2,3,4,5,6]
+			$.each(dice, function(i,die){
+				$.each(straight, function(j, value){
+					if(value == die.value){
+						straight.splice(j, 1);
+					}
+				});
+			});
+
+			if(straight.length == 0){
+				log("Got a straight!");
+				score += 1500;
+				$("#score").html(score);
+				return
+			}
+
+			// evaluate for potential 2x triples, 3x pairs
+			var matches = [0,0,0,0,0,0];
+			$.each(dice, function(i,dieA){
+				$.each(dice, function(j,dieB){
+					if(j == i){
+						return;
+					}
+
+					if(dieA.value == dieB.value){
+						matches[dieA.value]++
+					}
+				});
+			});
+
+			tripleCandidates = [];
+			pairCandidates = [];
+
+			$.each(matches, function(idx,count){
+				if(count < 2){
+					return
+				}
+
+				switch(count){
+					case 6:
+						log("Matched 6! BOOM! 3000 points!")
+						increaseScore(3000);
+						return;
+					break;
+					case 5:
+						log("Matched 5 '" + (idx+1) + "'! BOOM! 2000 points!")
+						increaseScore(2000);
+						$.each(dice, function(i,die){
+							if(die.value === idx+1){
+								dice[i].scored = true;
+							}
+						});
+					break;
+					case 4:
+						log("Matched 4! BOOM! 1000 points!")
+						increaseScore(1000);
+						$.each(dice, function(i,die){
+							if(die.value === idx+1){
+								dice[i].scored = true;
+							}
+						});
+					break;
+					case 3:
+						tripleCandidates.push(idx+1)
+					break;
+					case 2:
+						pairCandidates.push(idx+1)
+					break;
+				}
+			});
+
+			if(tripleCandidates.length === 1){
+				increaseScore(tripleCandidates[0] * 100)
+				log("Matched 3 " + tripleCandidates[0] + "'s! " + (tripleCandidates[0]*100) + " points!")
+				$.each(dice, function(i,die){
+					if(die.value === tripleCandidates[0]) {
+						dice[i].scored = true;
+					}
+				});
+			}
+
+			if(tripleCandidates.length === 2){
+				log("Triples! 2500 points!")
+				increaseScore(2500);
+				return;
+			}
+
+			if(pairCandidates.length === 3){
+				log("3 pairs! 1500 points!")
+				increaseScore(1500);
+				return;
+			}
+
+			$.each(dice, function(i,die){
+				if(die.scored) {
+					return;
+				}
+
+				if(die.value === 1) {
+					increaseScore(100);
+				}
+
+				if(die.value === 5) {
+					increaseScore(50);
+				}
+			});
+
+
+		}
+
+		function increaseScore(value) {
+			score += value;
+			$('#score').html(score);
+		}
+
+		function roll(dice){
+			// generate 6x random numbers 1-6
+
+			$.each(dice, function(i,die){
+				if(die.saved) {
+					dice[i].committed = true;
+					return;
+				}
+				dice[i].value = getRandomInt(6) + 1;
+			});
+			
+
+			diceHTML = "";
+			$.each(dice, function(i,die){
+				console.log("Die " + i + " Value: " + die.value);
+
+				if(die.committed) {
+					diceHTML += '<div class="dice dice-' + die.value + '-committed" id="die-idx-' + i + '" data-die-idx=' + i + '></div>';
+				} else {
+					diceHTML += '<div class="dice dice-' + die.value + '" id="die-idx-' + i + '" data-die-idx=' + i + '></div>';
+				}
+				
+			});
+
+			$('#dicetray').html(diceHTML);
+
+			$('.dice').on('click', function(el){
+
+				id = $(el.target).data("die-idx");
+
+				if(dice[id].committed) {
+					// not allowed to change saved die after rolling
+					log("not allowed to change saved die after rolling")
+					return
+				}
+
+				if(dice[id].saved) {
+					console.log("unsaving die " + id);
+					dice[id].saved = false;
+					$(el.target).addClass("dice-" + dice[id].value);
+					$(el.target).removeClass("dice-" + dice[id].value + "-saved");
+				} else {
+					console.log("saving die " + id);
+					dice[id].saved = true;
+					$(el.target).addClass("dice-" + dice[id].value + "-saved");
+					$(el.target).removeClass("dice-" + dice[id].value);
+				}
+				
+			});
+		}
+	</script>
+
+
+	<style>
+		.dice {font-size: 4em; margin:5px;}
+		.dice.saved {}
+	</style>
+
+</head>
+<body>
+	<div id='dicetray'></div>
+	<button onclick='userRoll()'>Roll</button><button onclick='userScore()'>Score</button>
+	<hr/>
+	<div id='feedback'></div>
+</body>
+</html>
