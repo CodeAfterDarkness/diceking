@@ -38,16 +38,16 @@
 			roll(dice);
 		}
 
-		function userScore() {
-			if(!scored){
-				applyScore(dice);
-			} else {
-				userRoll();
-			}
+		function log(msg){
+			$('#feedback').append(msg + "<br/>");
+		}
+
+		function getRandomInt(max) {
+		  return Math.floor(Math.random() * Math.floor(max));
 		}
 
 		function userRoll() {
-
+			console.log("rolling dice")
 			$('#feedback').html('');
 
 			if(scored) {
@@ -58,175 +58,58 @@
 				});
 				roll(dice);
 				scored = false;
+				tempScore = 0;
 				return;
 			}
+
 			savedCount = 0;
 			$.each(dice, function(i,die){
-				if(die.saved){
+				if(die.saved && !die.committed){
 					savedCount++;
 				}
 			});
 
-			if(!scored && saved === savedCount) {
+			if(!scored && savedCount === 0) {
 				log("User must save at least 1 die to roll again");
 				return
 			}
 
+			savedDice = [];
+			$.each(dice, function(i,die){
+				if(die.saved && !die.committed){
+					savedDice.push(die);
+				}
+			});
+
+			tempScore += evaluateScore(savedDice);
+
 			roll(dice);
-
-			applyScore(dice);
-
-		}
-
-		function log(msg){
-			$('#feedback').append(msg + "<br/>");
-		}
-
-		function getRandomInt(max) {
-		  return Math.floor(Math.random() * Math.floor(max));
 		}
 
 		function userCommitScore(){
+			scored = true;
 			score += tempScore;
 			tempScore = 0;
+
+			savedDice = [];
+			$.each(dice, function(i,die){
+				if(!die.committed){
+					savedDice.push(die);
+				}
+			});
+			score += evaluateScore(savedDice);
+			console.log("score increased to " + score);
 			$('#score').html(score);
-			userRoll();
+			//userRoll();
 		}
 
-
-		function applyScore(dice){
-			scored = true;
-
-			var straight = [1,2,3,4,5,6]
-			$.each(dice, function(i,die){
-				$.each(straight, function(j, value){
-					if(value == die.value){
-						straight.splice(j, 1);
-					}
-				});
-			});
-
-			if(straight.length == 0){
-				log("Got a straight!");
-				score += 1500;
-				$("#score").html(score);
-				return
-			}
-
-			// evaluate for potential 2x triples, 3x pairs
-			var matches = [0,0,0,0,0,0];
-			$.each(dice, function(i,dieA){
-				if(matches[dieA.value-1] > 0){
-					return;
-				}
-
-				$.each(dice.slice(i+1), function(j,dieB){
-					j = j+i+1
-
-					if(dieA.value === dieB.value){
-						//console.log("Found match ["+i+","+j+"]: dieA " + dieA.value + " === dieB " + dieB.value)
-						if(matches[dieA.value-1] === 0){
-							matches[dieA.value-1] = 2;
-						} else {
-							matches[dieA.value-1]++
-						}
-					}
-				});
-			});
-
-			tripleCandidates = [];
-			pairCandidates = [];
-
-			$.each(matches, function(idx,count){
-				if(count < 2){
-					return
-				}
-
-				switch(count){
-					case 6:
-						log("Matched 6 " + (idx+1) + "'s! BOOM! 3000 points!")
-						increaseScore(3000);
-						$.each(dice, function(i,die){
-							if(die.value === idx+1){
-								dice[i].scored = true;
-							}
-						});
-						return;
-					break;
-					case 5:
-						log("Matched 5 " + (idx+1) + "'s! BOOM! 2000 points!")
-						increaseScore(2000);
-						$.each(dice, function(i,die){
-							if(die.value === idx+1){
-								dice[i].scored = true;
-							}
-						});
-					break;
-					case 4:
-						log("Matched 4 " + (idx+1) + "'s! BOOM! 1000 points!")
-						increaseScore(1000);
-						$.each(dice, function(i,die){
-							if(die.value === idx+1){
-								dice[i].scored = true;
-							}
-						});
-					break;
-					case 3:
-						tripleCandidates.push(idx+1)
-					break;
-					case 2:
-						pairCandidates.push(idx+1)
-					break;
-				}
-			});
-
-			//console.log("Found " + tripleCandidates.length + " triple candidates")
-			//console.log("Found " + pairCandidates.length + " pair candidates")
-
-			if(tripleCandidates.length === 1){
-				increaseScore(tripleCandidates[0] * 100)
-				log("Matched 3 " + tripleCandidates[0] + "'s! " + (tripleCandidates[0]*100) + " points!")
-				$.each(dice, function(i,die){
-					if(die.value === tripleCandidates[0]) {
-						dice[i].scored = true;
-					}
-				});
-			}
-
-			if(tripleCandidates.length === 2){
-				log("Triples! 2500 points!")
-				increaseScore(2500);
-				return;
-			}
-
-			if(pairCandidates.length === 3){
-				log("3 pairs! 1500 points!")
-				increaseScore(1500);
-				return;
-			}
-
-			$.each(dice, function(i,die){
-				if(die.scored) {
-					return;
-				}
-
-				//console.log("Checking idx "+i+" for score on value "+die.value)
-
-				if(die.value === 1) {
-					log("Scored 100 at idx "+i)
-					increaseScore(100);
-				}
-
-				if(die.value === 5) {
-					log("Scored 50 at idx "+i)
-					increaseScore(50);
-				}
-			});
-		}
+		// Roll
+		// Save scoring die
+		// Click score to commit currently accumulated score
+		// OR
+		// Click roll to continue building score with another roll, potentially getting a farkle
 
 		function evaluateScore(dice){ // return score, but do not change game state
-
-			var dice = dice.slice(0)
 
 			var cscore = 0;
 
@@ -317,11 +200,18 @@
 			//console.log("Found " + pairCandidates.length + " pair candidates")
 
 			if(tripleCandidates.length === 1){
-				cscore += tripleCandidates[0] * 100
+				var points = 0;
+				if(tripleCandidates[0] === 1){
+					points = 1000;
+				} else {
+					points = tripleCandidates[0] * 100
+				}
 
-				console.log("Matched 3 " + tripleCandidates[0] + "'s! " + (tripleCandidates[0]*100) + " points!")
+				cscore += points;
+				
+				console.log("Matched 3 " + tripleCandidates[0] + "'s! " + points + " points!")
 				$.each(dice, function(i,die){
-					if(die.value === tripleCandidates[0]) {
+					if (die.value === tripleCandidates[0]) {
 						dice[i].scored = true;
 					}
 				});
@@ -330,13 +220,13 @@
 			if(tripleCandidates.length === 2){
 				console.log("Triples! 2500 points!")
 				cscore += 2500;
-				return;
+				return cscore;
 			}
 
 			if(pairCandidates.length === 3){
 				console.log("3 pairs! 1500 points!")
 				cscore += 1500;
-				return;
+				return cscore;
 			}
 
 			$.each(dice, function(i,die){
@@ -358,11 +248,6 @@
 			});
 
 			return cscore;
-		}
-
-		function increaseScore(value) {
-			tempScore += value;
-			//$('#score').html(score);
 		}
 
 		function roll(dice){
@@ -397,8 +282,9 @@
 			$('#dicetray').html(diceHTML);
 
 			//console.log("pre-roll: "+s1+" and post-roll: " +s2)
-
-			if(evaluateScore(newDice) === 0) {
+			var potentialScore = evaluateScore(newDice)
+			console.log("roll has " + potentialScore + " potential points, bringing hand up to " + (tempScore + potentialScore))
+			if(potentialScore === 0) {
 				console.log("farkle");
 				log("Farkle! All points this hand lost. Reroll.")
 				scored = true;
@@ -442,7 +328,7 @@
 </head>
 <body>
 	<div id='dicetray'></div><div id='score'>0</div>
-	<button onclick='userRoll()'>Roll</button><button onclick='userScore()'>Score</button>
+	<button onclick='userRoll()'>Roll</button><button onclick='userCommitScore()'>Score</button>
 	<hr/>
 	<div id='feedback'></div>
 </body>
