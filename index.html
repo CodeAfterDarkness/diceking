@@ -25,6 +25,7 @@
 		var dice = [];
 		var saved = 0;
 		var score = 0;
+		var tempScore = 0;
 		var scored = false;
 
 		function init() {
@@ -38,7 +39,11 @@
 		}
 
 		function userScore() {
-			evaluateScore(dice);
+			if(!scored){
+				applyScore(dice);
+			} else {
+				userRoll();
+			}
 		}
 
 		function userRoll() {
@@ -62,12 +67,14 @@
 				}
 			});
 
-			if(saved === savedCount) {
+			if(!scored && saved === savedCount) {
 				log("User must save at least 1 die to roll again");
 				return
 			}
 
 			roll(dice);
+
+			applyScore(dice);
 
 		}
 
@@ -79,8 +86,15 @@
 		  return Math.floor(Math.random() * Math.floor(max));
 		}
 
-		function evaluateScore(dice){
+		function userCommitScore(){
+			score += tempScore;
+			tempScore = 0;
+			$('#score').html(score);
+			userRoll();
+		}
 
+
+		function applyScore(dice){
 			scored = true;
 
 			var straight = [1,2,3,4,5,6]
@@ -110,7 +124,7 @@
 					j = j+i+1
 
 					if(dieA.value === dieB.value){
-						console.log("Found match ["+i+","+j+"]: dieA " + dieA.value + " === dieB " + dieB.value)
+						//console.log("Found match ["+i+","+j+"]: dieA " + dieA.value + " === dieB " + dieB.value)
 						if(matches[dieA.value-1] === 0){
 							matches[dieA.value-1] = 2;
 						} else {
@@ -166,12 +180,12 @@
 				}
 			});
 
-			console.log("Found " + tripleCandidates.length + " triple candidates")
-			console.log("Found " + pairCandidates.length + " pair candidates")
+			//console.log("Found " + tripleCandidates.length + " triple candidates")
+			//console.log("Found " + pairCandidates.length + " pair candidates")
 
 			if(tripleCandidates.length === 1){
 				increaseScore(tripleCandidates[0] * 100)
-				console.log("Matched 3 " + tripleCandidates[0] + "'s! " + (tripleCandidates[0]*100) + " points!")
+				log("Matched 3 " + tripleCandidates[0] + "'s! " + (tripleCandidates[0]*100) + " points!")
 				$.each(dice, function(i,die){
 					if(die.value === tripleCandidates[0]) {
 						dice[i].scored = true;
@@ -196,7 +210,7 @@
 					return;
 				}
 
-				console.log("Checking idx "+i+" for score on value "+die.value)
+				//console.log("Checking idx "+i+" for score on value "+die.value)
 
 				if(die.value === 1) {
 					log("Scored 100 at idx "+i)
@@ -208,26 +222,165 @@
 					increaseScore(50);
 				}
 			});
+		}
 
+		function evaluateScore(dice){ // return score, but do not change game state
 
+			var dice = dice.slice(0)
+
+			var cscore = 0;
+
+			var straight = [1,2,3,4,5,6]
+			$.each(dice, function(i,die){
+				$.each(straight, function(j, value){
+					if(value == die.value){
+						straight.splice(j, 1);
+					}
+				});
+			});
+
+			if(straight.length == 0){
+				console.log("Got a straight!");
+				cscore += 1500;
+				$("#score").html(score);
+				return cscore;
+			}
+
+			// evaluate for potential 2x triples, 3x pairs
+			var matches = [0,0,0,0,0,0];
+			$.each(dice, function(i,dieA){
+				if(matches[dieA.value-1] > 0){
+					return;
+				}
+
+				$.each(dice.slice(i+1), function(j,dieB){
+					j = j+i+1
+
+					if(dieA.value === dieB.value){
+						//console.log("Found match ["+i+","+j+"]: dieA " + dieA.value + " === dieB " + dieB.value)
+						if(matches[dieA.value-1] === 0){
+							matches[dieA.value-1] = 2;
+						} else {
+							matches[dieA.value-1]++
+						}
+					}
+				});
+			});
+
+			tripleCandidates = [];
+			pairCandidates = [];
+
+			$.each(matches, function(idx,count){
+				if(count < 2){
+					return
+				}
+
+				switch(count){
+					case 6:
+						console.log("Matched 6 " + (idx+1) + "'s! BOOM! 3000 points!")
+						cscore += 3000;
+						$.each(dice, function(i,die){
+							if(die.value === idx+1){
+								dice[i].scored = true;
+							}
+						});
+						return;
+					break;
+					case 5:
+						console.log("Matched 5 " + (idx+1) + "'s! BOOM! 2000 points!")
+						cscore += 2000;
+						$.each(dice, function(i,die){
+							if(die.value === idx+1){
+								dice[i].scored = true;
+							}
+						});
+					break;
+					case 4:
+						console.log("Matched 4 " + (idx+1) + "'s! BOOM! 1000 points!")
+						cscore += 1000;
+						$.each(dice, function(i,die){
+							if(die.value === idx+1){
+								dice[i].scored = true;
+							}
+						});
+					break;
+					case 3:
+						tripleCandidates.push(idx+1)
+					break;
+					case 2:
+						pairCandidates.push(idx+1)
+					break;
+				}
+			});
+
+			//console.log("Found " + tripleCandidates.length + " triple candidates")
+			//console.log("Found " + pairCandidates.length + " pair candidates")
+
+			if(tripleCandidates.length === 1){
+				cscore += tripleCandidates[0] * 100
+
+				console.log("Matched 3 " + tripleCandidates[0] + "'s! " + (tripleCandidates[0]*100) + " points!")
+				$.each(dice, function(i,die){
+					if(die.value === tripleCandidates[0]) {
+						dice[i].scored = true;
+					}
+				});
+			}
+
+			if(tripleCandidates.length === 2){
+				console.log("Triples! 2500 points!")
+				cscore += 2500;
+				return;
+			}
+
+			if(pairCandidates.length === 3){
+				console.log("3 pairs! 1500 points!")
+				cscore += 1500;
+				return;
+			}
+
+			$.each(dice, function(i,die){
+				if(die.scored) {
+					return;
+				}
+
+				//console.log("Checking idx "+i+" for score on value "+die.value)
+
+				if(die.value === 1) {
+					console.log("Scored 100 at idx "+i)
+					cscore += 100;
+				}
+
+				if(die.value === 5) {
+					console.log("Scored 50 at idx "+i)
+					cscore += 50;
+				}
+			});
+
+			return cscore;
 		}
 
 		function increaseScore(value) {
-			score += value;
-			$('#score').html(score);
+			tempScore += value;
+			//$('#score').html(score);
 		}
 
 		function roll(dice){
 			// generate 6x random numbers 1-6
 
+			// determine score before rolling
+			// determine score after rolling
+			// no change in score == farkle
+
+			var newDice = [];
 			$.each(dice, function(i,die){
 				if(die.saved) {
 					dice[i].committed = true;
 					return;
 				}
 				dice[i].value = getRandomInt(6) + 1;
+				newDice.push(dice[i])
 			});
-			
 
 			diceHTML = "";
 			$.each(dice, function(i,die){
@@ -243,29 +396,40 @@
 
 			$('#dicetray').html(diceHTML);
 
-			$('.dice').on('click', function(el){
+			//console.log("pre-roll: "+s1+" and post-roll: " +s2)
 
-				id = $(el.target).data("die-idx");
+			if(evaluateScore(newDice) === 0) {
+				console.log("farkle");
+				log("Farkle! All points this hand lost. Reroll.")
+				scored = true;
+				return
+			} else {
+				$('.dice').on('click', function(el){
 
-				if(dice[id].committed) {
-					// not allowed to change saved die after rolling
-					log("not allowed to change saved die after rolling")
-					return
-				}
+					id = $(el.target).data("die-idx");
 
-				if(dice[id].saved) {
-					//console.log("unsaving die " + id);
-					dice[id].saved = false;
-					$(el.target).addClass("dice-" + dice[id].value);
-					$(el.target).removeClass("dice-" + dice[id].value + "-saved");
-				} else {
-					//console.log("saving die " + id);
-					dice[id].saved = true;
-					$(el.target).addClass("dice-" + dice[id].value + "-saved");
-					$(el.target).removeClass("dice-" + dice[id].value);
-				}
-				
-			});
+					if(dice[id].committed) {
+						// not allowed to change saved die after rolling
+						log("not allowed to change saved die after rolling")
+						return
+					}
+
+					if(dice[id].saved) {
+						//console.log("unsaving die " + id);
+						dice[id].saved = false;
+						$(el.target).addClass("dice-" + dice[id].value);
+						$(el.target).removeClass("dice-" + dice[id].value + "-saved");
+					} else {
+						//console.log("saving die " + id);
+						dice[id].saved = true;
+						$(el.target).addClass("dice-" + dice[id].value + "-saved");
+						$(el.target).removeClass("dice-" + dice[id].value);
+					}
+					
+				});
+			}
+
+			
 		}
 	</script>
 
