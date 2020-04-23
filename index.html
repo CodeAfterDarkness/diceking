@@ -24,6 +24,8 @@
 
 		var dice = [];
 		var saved = 0;
+		var score = 0;
+		var scored = false;
 
 		function init() {
 			console.log("Dice King initialized");
@@ -40,6 +42,19 @@
 		}
 
 		function userRoll() {
+
+			$('#feedback').html('');
+
+			if(scored) {
+				$.each(dice, function(i,die){
+					dice[i].committed = false;
+					dice[i].saved = false;
+					dice[i].scored = false;
+				});
+				roll(dice);
+				scored = false;
+				return;
+			}
 			savedCount = 0;
 			$.each(dice, function(i,die){
 				if(die.saved){
@@ -57,7 +72,7 @@
 		}
 
 		function log(msg){
-			$('#feedback').html(msg);
+			$('#feedback').append(msg + "<br/>");
 		}
 
 		function getRandomInt(max) {
@@ -65,6 +80,8 @@
 		}
 
 		function evaluateScore(dice){
+
+			scored = true;
 
 			var straight = [1,2,3,4,5,6]
 			$.each(dice, function(i,die){
@@ -85,13 +102,20 @@
 			// evaluate for potential 2x triples, 3x pairs
 			var matches = [0,0,0,0,0,0];
 			$.each(dice, function(i,dieA){
-				$.each(dice, function(j,dieB){
-					if(j == i){
-						return;
-					}
+				if(matches[dieA.value-1] > 0){
+					return;
+				}
 
-					if(dieA.value == dieB.value){
-						matches[dieA.value]++
+				$.each(dice.slice(i+1), function(j,dieB){
+					j = j+i+1
+
+					if(dieA.value === dieB.value){
+						console.log("Found match ["+i+","+j+"]: dieA " + dieA.value + " === dieB " + dieB.value)
+						if(matches[dieA.value-1] === 0){
+							matches[dieA.value-1] = 2;
+						} else {
+							matches[dieA.value-1]++
+						}
 					}
 				});
 			});
@@ -106,12 +130,17 @@
 
 				switch(count){
 					case 6:
-						log("Matched 6! BOOM! 3000 points!")
+						log("Matched 6 " + (idx+1) + "'s! BOOM! 3000 points!")
 						increaseScore(3000);
+						$.each(dice, function(i,die){
+							if(die.value === idx+1){
+								dice[i].scored = true;
+							}
+						});
 						return;
 					break;
 					case 5:
-						log("Matched 5 '" + (idx+1) + "'! BOOM! 2000 points!")
+						log("Matched 5 " + (idx+1) + "'s! BOOM! 2000 points!")
 						increaseScore(2000);
 						$.each(dice, function(i,die){
 							if(die.value === idx+1){
@@ -120,7 +149,7 @@
 						});
 					break;
 					case 4:
-						log("Matched 4! BOOM! 1000 points!")
+						log("Matched 4 " + (idx+1) + "'s! BOOM! 1000 points!")
 						increaseScore(1000);
 						$.each(dice, function(i,die){
 							if(die.value === idx+1){
@@ -137,9 +166,12 @@
 				}
 			});
 
+			console.log("Found " + tripleCandidates.length + " triple candidates")
+			console.log("Found " + pairCandidates.length + " pair candidates")
+
 			if(tripleCandidates.length === 1){
 				increaseScore(tripleCandidates[0] * 100)
-				log("Matched 3 " + tripleCandidates[0] + "'s! " + (tripleCandidates[0]*100) + " points!")
+				console.log("Matched 3 " + tripleCandidates[0] + "'s! " + (tripleCandidates[0]*100) + " points!")
 				$.each(dice, function(i,die){
 					if(die.value === tripleCandidates[0]) {
 						dice[i].scored = true;
@@ -164,11 +196,15 @@
 					return;
 				}
 
+				console.log("Checking idx "+i+" for score on value "+die.value)
+
 				if(die.value === 1) {
+					log("Scored 100 at idx "+i)
 					increaseScore(100);
 				}
 
 				if(die.value === 5) {
+					log("Scored 50 at idx "+i)
 					increaseScore(50);
 				}
 			});
@@ -195,7 +231,7 @@
 
 			diceHTML = "";
 			$.each(dice, function(i,die){
-				console.log("Die " + i + " Value: " + die.value);
+				//console.log("Die " + i + " Value: " + die.value);
 
 				if(die.committed) {
 					diceHTML += '<div class="dice dice-' + die.value + '-committed" id="die-idx-' + i + '" data-die-idx=' + i + '></div>';
@@ -218,12 +254,12 @@
 				}
 
 				if(dice[id].saved) {
-					console.log("unsaving die " + id);
+					//console.log("unsaving die " + id);
 					dice[id].saved = false;
 					$(el.target).addClass("dice-" + dice[id].value);
 					$(el.target).removeClass("dice-" + dice[id].value + "-saved");
 				} else {
-					console.log("saving die " + id);
+					//console.log("saving die " + id);
 					dice[id].saved = true;
 					$(el.target).addClass("dice-" + dice[id].value + "-saved");
 					$(el.target).removeClass("dice-" + dice[id].value);
@@ -241,7 +277,7 @@
 
 </head>
 <body>
-	<div id='dicetray'></div>
+	<div id='dicetray'></div><div id='score'>0</div>
 	<button onclick='userRoll()'>Roll</button><button onclick='userScore()'>Score</button>
 	<hr/>
 	<div id='feedback'></div>
