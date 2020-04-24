@@ -4,6 +4,7 @@ Massively Multiplayer Online Farkle
 
 Dice game like Farkle, but instead of the results of each roll becoming part of your score, it instead adds to resource pools for offense or defense. The idea being to build a "kingdom" by spending these points on defenses, while also allocating resources to fight opponents, degrading their kingdoms.
 
+![Screenshot](https://github.com/CodeAfterDark/diceking/blob/master/screenshot.png?raw=true)
 
 # Goals
 - Dice roll generator
