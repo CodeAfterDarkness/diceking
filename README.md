@@ -13,6 +13,8 @@ Dice game like Farkle, but instead of the results of each roll becoming part of 
 	- ~Continue rolling if all dice score~
 - Server
 	- ~Serve game resources from server~
+	- ~Port scoring algorithm from JS to Go~
+	- ~Add tests for scoring algorithm~
 	- Serve rolls from server
 	- User session handling
 	- Lobby for matchmaking
