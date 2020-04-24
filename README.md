@@ -6,7 +6,7 @@ Dice game like Farkle, but instead of the results of each roll becoming part of 
 
 ![Screenshot](screenshot.png)
 
-![Youtube Playlist](https://www.youtube.com/playlist?list=PLHb3UFyyffpjQJkTslqhnhzQJMAw_59Xy)
+[Youtube Playlist](https://www.youtube.com/playlist?list=PLHb3UFyyffpjQJkTslqhnhzQJMAw_59Xy)
 
 # Goals
 - Dice roll generator
