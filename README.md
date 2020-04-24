@@ -12,7 +12,7 @@ Dice game like Farkle, but instead of the results of each roll becoming part of 
 	- ~Toss entire roll if no scoring dice rolled~
 	- ~Continue rolling if all dice score~
 - Server
-	- Serve game resources from server
+	- ~Serve game resources from server~
 	- Serve rolls from server
 	- User session handling
 	- Lobby for matchmaking
@@ -31,4 +31,3 @@ Dice game like Farkle, but instead of the results of each roll becoming part of 
 	- Castle
 	- Attack
 - Multiple players
-- Stream/chat influence
