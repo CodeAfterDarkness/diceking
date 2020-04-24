@@ -1,16 +1,20 @@
 package main
 
+import "fmt"
+
 func evaluateScore(dice []die) int {
 	var score int
 
 	straight := []int{1, 2, 3, 4, 5, 6}
 	for _, die := range dice {
-		for j, value := range straight {
-			if value == die.Value {
+		for j := len(straight) - 1; j >= 0; j-- {
+			if straight[j] == die.Value {
 				straight = append(straight[:j], straight[j+1:]...)
 			}
 		}
 	}
+
+	fmt.Printf("Straight: %v\n", straight)
 
 	if len(straight) == 0 {
 		score = 1500
@@ -20,7 +24,7 @@ func evaluateScore(dice []die) int {
 	matches := []int{0, 0, 0, 0, 0, 0}
 	for i, dieA := range dice {
 		if matches[dieA.Value-1] > 0 {
-			return score
+			continue
 		}
 
 		// if i == 6 {
@@ -38,6 +42,8 @@ func evaluateScore(dice []die) int {
 			}
 		}
 	}
+
+	fmt.Printf("Matches: %v\n", matches)
 
 	tripleCandidates := []int{}
 	pairCandidates := []int{}

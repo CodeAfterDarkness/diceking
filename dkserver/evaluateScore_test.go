@@ -1,6 +1,9 @@
 package main
 
-import "testing"
+import (
+	"log"
+	"testing"
+)
 
 func d(v int) die {
 	return die{Value: v}
@@ -44,7 +47,8 @@ func TestEvaluateScore(t *testing.T) {
 
 	for _, test := range tests {
 		if test.ExpectedScore != evaluateScore(test.Dice) {
-			t.Fatalf("Test '%s' failed: %d != %d", test.Name, test.ExpectedScore, evaluateScore(test.Dice))
+			log.Printf("Test '%s' failed: expected %d, but got %d", test.Name, test.ExpectedScore, evaluateScore(test.Dice))
+			t.Fail()
 		}
 	}
 
