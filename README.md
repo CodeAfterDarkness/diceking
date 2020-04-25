@@ -37,3 +37,4 @@ Dice game like Farkle, but instead of the results of each roll becoming part of 
 	- Castle
 	- Attack
 - Multiple players
+- More magic!
