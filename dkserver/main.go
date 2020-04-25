@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"log"
@@ -24,6 +25,13 @@ type player struct {
 	Dice        []die
 	Score       int
 	Scored      bool
+}
+
+func newPlayer() player {
+	p := player{}
+	for i := 0; i < 6; i++ {
+		p.Dice = append(p.Dice, die{})
+	}
 }
 
 type game struct {
@@ -105,13 +113,26 @@ func rollHandler(w http.ResponseWriter, req *http.Request, params httprouter.Par
 
 	// Establish session
 
+	// receive dice state, save to player state
+
+	p := newPlayer()
+
+	for i, _ := range p.Dice {
+		p.Dice[i].Value = rand.Int31n(5) + 1
+	}
+
+	jsonBytes, err := json.Marshal(p.Dice)
+	if err != nil {
+		log.Print(err)
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.Write(jsonBytes)
 }
 
 func scoreHandler(w http.ResponseWriter, req *http.Request, params httprouter.Params) {
 	log.Print("Someone requested score handler")
 	w.WriteHeader(http.StatusServiceUnavailable)
-}
-
-func rollDie() int {
-	return int(rand.Int31n(5) + 1)
 }
