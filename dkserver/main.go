@@ -54,7 +54,7 @@ func main() {
 
 	router.GET("/", baseHandler)
 
-	addr := ":8080"
+	addr := ":80"
 	ln, err := createOrImportListener(addr)
 	if err != nil {
 		log.Print(err)
