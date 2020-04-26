@@ -69,14 +69,14 @@ func gameStateProcessor() {
 			for pidx, player := range g.Players {
 				if player.UUID == p.UUID {
 					// update player with state from p
-					player.Scored = p.Scored
+					g.Players[pidx].Scored = p.Scored
 					for i, die := range p.Dice {
 						g.Players[pidx].Dice[i].Value = die.Value
 						g.Players[pidx].Dice[i].Committed = die.Committed
 						g.Players[pidx].Dice[i].Scored = die.Scored
 						g.Players[pidx].Dice[i].Saved = die.Saved
 					}
-					log.Printf("Saved player %#v", player)
+					log.Printf("Saved player %#v", g.Players[pidx])
 					continue
 				}
 			}
