@@ -56,13 +56,16 @@ func gameStateProcessor() {
 	for {
 		select {
 		case preq := <-g.getPlayerChan:
+			log.Print("Received get player request")
 			for _, player := range g.Players {
 				if player.UUID == preq.uuid {
+					log.Printf("Responding with player %s, with dice %#v", player.UUID, player.Dice)
 					preq.resp <- player
 				}
 			}
 			preq.resp <- nil
 		case p := <-g.setPlayerChan:
+			log.Print("Received set player request")
 			for _, player := range g.Players {
 				if player.UUID == p.UUID {
 					// update player with state from p
@@ -73,6 +76,7 @@ func gameStateProcessor() {
 						player.Dice[i].Scored = die.Scored
 						player.Dice[i].Saved = die.Saved
 					}
+					log.Printf("Saved player %#v", player)
 					continue
 				}
 			}
