@@ -66,15 +66,15 @@ func gameStateProcessor() {
 			preq.resp <- nil
 		case p := <-g.setPlayerChan:
 			log.Print("Received set player request")
-			for _, player := range g.Players {
+			for pidx, player := range g.Players {
 				if player.UUID == p.UUID {
 					// update player with state from p
 					player.Scored = p.Scored
 					for i, die := range p.Dice {
-						player.Dice[i].Value = die.Value
-						player.Dice[i].Committed = die.Committed
-						player.Dice[i].Scored = die.Scored
-						player.Dice[i].Saved = die.Saved
+						g.Players[pidx].Dice[i].Value = die.Value
+						g.Players[pidx].Dice[i].Committed = die.Committed
+						g.Players[pidx].Dice[i].Scored = die.Scored
+						g.Players[pidx].Dice[i].Saved = die.Saved
 					}
 					log.Printf("Saved player %#v", player)
 					continue
