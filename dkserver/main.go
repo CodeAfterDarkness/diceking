@@ -32,6 +32,8 @@ func newPlayer() player {
 	for i := 0; i < 6; i++ {
 		p.Dice = append(p.Dice, die{})
 	}
+
+	return p
 }
 
 type game struct {
@@ -118,7 +120,7 @@ func rollHandler(w http.ResponseWriter, req *http.Request, params httprouter.Par
 	p := newPlayer()
 
 	for i, _ := range p.Dice {
-		p.Dice[i].Value = rand.Int31n(5) + 1
+		p.Dice[i].Value = int(rand.Int31n(5) + 1)
 	}
 
 	jsonBytes, err := json.Marshal(p.Dice)
