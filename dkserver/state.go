@@ -85,6 +85,22 @@ func gameStateProcessor() {
 	}
 }
 
+func newSession() *player {
+	var p *player
+	uuid := uuid.New().String()
+	cookie = &http.Cookie{
+		Name:   "UUID",
+		Value:  uuid,
+		Domain: "diceking.online",
+	}
+	http.SetCookie(w, cookie)
+	// get player from gameState
+	p = newPlayer()
+	p.UUID = uuid
+	g.setPlayerChan <- p
+	return p
+}
+
 func rollHandler(w http.ResponseWriter, req *http.Request, params httprouter.Params) {
 	log.Print("Someone requested roll handler")
 
@@ -96,17 +112,7 @@ func rollHandler(w http.ResponseWriter, req *http.Request, params httprouter.Par
 
 	cookie, err := req.Cookie("UUID")
 	if err != nil {
-		uuid := uuid.New().String()
-		cookie = &http.Cookie{
-			Name:   "UUID",
-			Value:  uuid,
-			Domain: "diceking.online",
-		}
-		http.SetCookie(w, cookie)
-		// get player from gameState
-		p = newPlayer()
-		p.UUID = uuid
-		g.setPlayerChan <- p
+		p = newSession()
 	} else {
 		pr := playerReq{
 			uuid: cookie.Value,
@@ -118,7 +124,8 @@ func rollHandler(w http.ResponseWriter, req *http.Request, params httprouter.Par
 
 	if p == nil {
 		log.Print("Player is nil")
-		return
+		p = newSession()
+		//return
 	}
 
 	for i, _ := range p.Dice {
