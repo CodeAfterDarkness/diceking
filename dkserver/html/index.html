@@ -256,7 +256,11 @@
 				method: "GET",
 				dataType: "json",
 				success: function(json){
-					console.log(json);
+					//console.log(json);
+
+					$.each(json, function(i,die){
+						console.log(die.Value);
+					});
 				},
 			});
 		}
