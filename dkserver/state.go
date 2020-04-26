@@ -88,12 +88,7 @@ func gameStateProcessor() {
 func newSession() *player {
 	var p *player
 	uuid := uuid.New().String()
-	cookie = &http.Cookie{
-		Name:   "UUID",
-		Value:  uuid,
-		Domain: "diceking.online",
-	}
-	http.SetCookie(w, cookie)
+
 	// get player from gameState
 	p = newPlayer()
 	p.UUID = uuid
@@ -113,6 +108,12 @@ func rollHandler(w http.ResponseWriter, req *http.Request, params httprouter.Par
 	cookie, err := req.Cookie("UUID")
 	if err != nil {
 		p = newSession()
+		cookie = &http.Cookie{
+			Name:   "UUID",
+			Value:  p.UUID,
+			Domain: "diceking.online",
+		}
+		http.SetCookie(w, cookie)
 	} else {
 		pr := playerReq{
 			uuid: cookie.Value,
@@ -125,6 +126,12 @@ func rollHandler(w http.ResponseWriter, req *http.Request, params httprouter.Par
 	if p == nil {
 		log.Print("Player is nil")
 		p = newSession()
+		cookie = &http.Cookie{
+			Name:   "UUID",
+			Value:  p.UUID,
+			Domain: "diceking.online",
+		}
+		http.SetCookie(w, cookie)
 		//return
 	}
 
