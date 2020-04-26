@@ -120,7 +120,7 @@ func rollHandler(w http.ResponseWriter, req *http.Request, params httprouter.Par
 	p := newPlayer()
 
 	for i, _ := range p.Dice {
-		p.Dice[i].Value = int(rand.Int31n(5) + 1)
+		p.Dice[i].Value = int(rand.Int31n(6) + 1)
 	}
 
 	jsonBytes, err := json.Marshal(p.Dice)
