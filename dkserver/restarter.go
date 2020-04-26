@@ -205,6 +205,8 @@ func restartHandler(w http.ResponseWriter, req *http.Request, params httprouter.
 		log.Printf("Restarting and rebuilding in response to restart request.")
 	}
 
+	req.ParseForm()
+
 	rebuild := req.Form.Get("rebuild")
 
 	if rebuild == "1" {
