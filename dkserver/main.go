@@ -1,7 +1,6 @@
 package main
 
 import (
-	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"log"
@@ -12,48 +11,17 @@ import (
 	"github.com/julienschmidt/httprouter"
 )
 
-type die struct {
-	Value     int
-	Saved     bool
-	Committed bool
-	Scored    bool
-}
-
-type player struct {
-	Name        string
-	SessionGUID string
-	Dice        []die
-	Score       int
-	Scored      bool
-}
-
-func newPlayer() player {
-	p := player{}
-	for i := 0; i < 6; i++ {
-		p.Dice = append(p.Dice, die{})
-	}
-
-	return p
-}
-
-type game struct {
-	Players []player
-}
-
-var router *httprouter.Router
-
 func main() {
 	rand.Seed(time.Now().UnixNano())
+
+	go gameStateProcessor()
 
 	router = httprouter.New()
 
 	router.GET("/gracefullyRestart", restartHandler)
-
 	router.GET("/roll", rollHandler)
 	router.GET("/score", scoreHandler)
-
 	router.GET("/css/*file", cssHandler)
-
 	router.GET("/", baseHandler)
 
 	addr := ":80"
@@ -70,6 +38,8 @@ func main() {
 	}
 	fmt.Printf("Exiting.\n")
 }
+
+var router *httprouter.Router
 
 func cssHandler(w http.ResponseWriter, req *http.Request, params httprouter.Params) {
 	log.Print("Someone requested css")
@@ -108,33 +78,4 @@ func sessionHandler(session string) (player, error) {
 	player := players[0]
 
 	return player, nil
-}
-
-func rollHandler(w http.ResponseWriter, req *http.Request, params httprouter.Params) {
-	log.Print("Someone requested roll handler")
-
-	// Establish session
-
-	// receive dice state, save to player state
-
-	p := newPlayer()
-
-	for i, _ := range p.Dice {
-		p.Dice[i].Value = int(rand.Int31n(6) + 1)
-	}
-
-	jsonBytes, err := json.Marshal(p.Dice)
-	if err != nil {
-		log.Print(err)
-		w.WriteHeader(http.StatusInternalServerError)
-		return
-	}
-
-	w.Header().Set("Content-Type", "application/json")
-	w.Write(jsonBytes)
-}
-
-func scoreHandler(w http.ResponseWriter, req *http.Request, params httprouter.Params) {
-	log.Print("Someone requested score handler")
-	w.WriteHeader(http.StatusServiceUnavailable)
 }
