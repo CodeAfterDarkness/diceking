@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<DOCTYPE html>
 <html>
 <head>
 	<meta charset="UTF-8">
@@ -6,7 +6,7 @@
 
 	<!--jQuery?-->
 	<!--Bootstrap?-->
-	<link rel='stylesheet' type='text/css' href='css/dice.css'>
+	<link rel='stylesheet' href='dice.css'>
 	<script type='application/javascript' src='https://code.jquery.com/jquery-3.5.0.slim.min.js'></script>
 
 	<script type='application/javascript'>
@@ -250,6 +250,18 @@
 			return cscore;
 		}
 
+		function rollAjax(){
+			$.ajax({
+				url: "/roll",
+				data: {},
+				method: "GET",
+				dataType: "json",
+				success: function(json){
+					console.log(json);
+				}
+			})
+		}
+
 		function roll(dice){
 			// generate 6x random numbers 1-6
 
@@ -328,7 +340,7 @@
 </head>
 <body>
 	<div id='dicetray'></div><div id='score'>0</div>
-	<button onclick='userRoll()'>Roll</button><button onclick='userCommitScore()'>Score</button>
+	<button onclick='rollAjax()'>Roll</button><button onclick='userCommitScore()'>Score</button>
 	<hr/>
 	<div id='feedback'></div>
 </body>
