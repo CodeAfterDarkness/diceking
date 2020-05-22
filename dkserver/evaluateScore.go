@@ -2,7 +2,7 @@ package main
 
 import "fmt"
 
-func evaluateScore(dice []die) int {
+func evaluateScore(dice []die, output *[]string) int {
 	var score int
 
 	straight := []int{1, 2, 3, 4, 5, 6}
@@ -118,6 +118,8 @@ func evaluateScore(dice []die) int {
 			score += 50
 		}
 	}
+
+	*output = append(*output, fmt.Sprintf("Scored %d", score))
 
 	return score
 }

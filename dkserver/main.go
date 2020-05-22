@@ -12,6 +12,7 @@ import (
 )
 
 func main() {
+	log.SetFlags(log.Lshortfile | log.LstdFlags)
 	rand.Seed(time.Now().UnixNano())
 
 	go gameStateProcessor()
@@ -19,9 +20,10 @@ func main() {
 	router = httprouter.New()
 
 	router.GET("/gracefullyRestart", restartHandler)
-	router.GET("/roll", rollHandler)
-	router.GET("/score", scoreHandler)
+	router.POST("/roll", rollHandler)
+	router.POST("/score", scoreHandler)
 	router.GET("/css/*file", cssHandler)
+	router.GET("/js/*file", jsHandler)
 	router.GET("/", baseHandler)
 
 	addr := ":80"
@@ -52,6 +54,20 @@ func cssHandler(w http.ResponseWriter, req *http.Request, params httprouter.Para
 	}
 
 	w.Header().Set("Content-Type", "text/css")
+	w.Write(fileBytes)
+}
+
+func jsHandler(w http.ResponseWriter, req *http.Request, params httprouter.Params) {
+	log.Print("Someone requested js")
+
+	log.Printf("Req: %s", req.URL.String())
+
+	fileBytes, err := ioutil.ReadFile("js" + params.ByName("file"))
+	if err != nil {
+		log.Print(err)
+	}
+
+	w.Header().Set("Content-Type", "application/js")
 	w.Write(fileBytes)
 }
 
