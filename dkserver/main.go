@@ -6,9 +6,11 @@ import (
 	"log"
 	"math/rand"
 	"net/http"
+	"os"
 	"time"
 
 	"github.com/julienschmidt/httprouter"
+	uuid "github.com/nu7hatch/gouuid"
 )
 
 func main() {
@@ -18,6 +20,10 @@ func main() {
 	go gameStateProcessor()
 
 	router = httprouter.New()
+
+	uuid, _ := uuid.NewV4()
+
+	os.Setenv("DICEKING_GENERATED_RESTART_KEY", uuid.String())
 
 	router.GET("/gracefullyRestart", restartHandler)
 	router.POST("/roll", rollHandler)
@@ -30,6 +36,7 @@ func main() {
 	ln, err := createOrImportListener(addr)
 	if err != nil {
 		log.Print(err)
+		return
 	}
 
 	server := startServer(addr, ln)
@@ -76,10 +83,19 @@ func baseHandler(w http.ResponseWriter, req *http.Request, params httprouter.Par
 
 	log.Printf("Req: %s", req.URL.String())
 
+	fmt.Printf("User Agent: %s\nRemote addr: %s\n", req.UserAgent(), req.RemoteAddr)
+
 	fileBytes, err := ioutil.ReadFile("html/index.html")
 	if err != nil {
 		log.Print(err)
 	}
+
+	cookie := &http.Cookie{
+		Name:   "RESTART_UUID",
+		Value:  os.Getenv("DICEKING_GENERATED_RESTART_KEY"),
+		Domain: req.URL.Hostname(),
+	}
+	http.SetCookie(w, cookie)
 
 	w.Header().Set("Content-Type", "text/html")
 	w.Write(fileBytes)

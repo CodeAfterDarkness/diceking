@@ -197,13 +197,33 @@ func waitForSignals(addr string, ln net.Listener, server *http.Server) error {
 func restartHandler(w http.ResponseWriter, req *http.Request, params httprouter.Params) {
 	key := params.ByName("key")
 
+	restartCookie, err := req.Cookie("RESTART_UUID")
+	if err != nil {
+		log.Print(err)
+	}
+
+	var restartFail bool = true
+
+	if restartCookie != nil {
+		if restartCookie.Value == os.Getenv("DICEKING_GENERATED_RESTART_KEY") {
+			restartFail = false
+		}
+	}
+
 	if key == os.Getenv("DICEKING_RESTART_KEY") {
-		log.Printf("Keys don't match.")
-		w.WriteHeader(http.StatusUnauthorized)
-		return
+		restartFail = false
 	} else {
 		log.Printf("Restarting and rebuilding in response to restart request.")
 	}
+
+	if restartFail {
+		log.Printf("Keys don't match.")
+		w.WriteHeader(http.StatusUnauthorized)
+		return
+	}
+
+	w.Write([]byte(`{"result":"success"}`))
+	w.WriteHeader(http.StatusOK)
 
 	req.ParseForm()
 

@@ -239,6 +239,18 @@ function evaluateScore(dice){ // return score, but do not change game state
 	return cscore;
 }
 
+function restartAjax() {
+	$.ajax({
+		url: "/gracefullyRestart",
+		method: "GET",
+		dataType: "json",
+		success: function(json){
+			console.log("server restarted");
+			window.location.reload(false); 
+		},
+	});
+}
+
 function rollAjax(dice){
 	$.each(dice, function(i,die){
 		if(die.saved) {
