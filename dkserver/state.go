@@ -6,8 +6,6 @@ import (
 	"log"
 	"math/rand"
 	"net/http"
-	"os"
-	"time"
 
 	"github.com/google/uuid"
 
@@ -62,7 +60,7 @@ func gameStateProcessor() {
 	g.setPlayerChan = make(chan *player, 10)
 	g.getPlayerChan = make(chan playerReq, 10)
 
-	saveTicker := time.NewTicker(time.Second * 10)
+	// saveTicker := time.NewTicker(time.Second * 10)
 
 	for {
 		select {
@@ -94,12 +92,12 @@ func gameStateProcessor() {
 				}
 			}
 			g.Players = append(g.Players, p)
-		case <-saveTicker.C:
-			f, err := os.OpenFile("gameState.json", os.O_CREATE|os.O_WRONLY|os.O_TRUNC, perm)
-			if err != nil {
-				log.Print(err)
-				continue
-			}
+			// case <-saveTicker.C:
+			// 	f, err := os.OpenFile("gameState.json", os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0755)
+			// 	if err != nil {
+			// 		log.Print(err)
+			// 		continue
+			// 	}
 
 		}
 	}
@@ -178,15 +176,15 @@ func rollHandler(w http.ResponseWriter, req *http.Request, params httprouter.Par
 		return
 	}
 
-	var savedDice []die
-	var unsavedDice []die
+	var committedDice []die
+	var uncommittedDice []die
 	for i, d := range p.Dice {
 		if d.Committed {
 			continue
 		}
 
 		if d.Saved {
-			log.Printf("User '%s' saved die %d value %d", p.Name, i, userDie.Value)
+			log.Printf("User '%s' saved die %d value %d", p.Name, i, d.Value)
 			p.Dice[i].Committed = true
 			committedDice = append(committedDice, d)
 		} else {
@@ -197,7 +195,7 @@ func rollHandler(w http.ResponseWriter, req *http.Request, params httprouter.Par
 
 	p.PotentialScore = evaluateScore(committedDice, &output)
 
-	score = evaluateScore(uncommittedDice, &output)
+	score := evaluateScore(uncommittedDice, &output)
 	if score == 0 {
 		p.PotentialScore = 0
 		log.Print("Farkle!")
