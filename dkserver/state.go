@@ -178,29 +178,30 @@ func rollHandler(w http.ResponseWriter, req *http.Request, params httprouter.Par
 		return
 	}
 
-	//log.Printf("User dice: %#v", userDice)
+	var savedDice []die
+	var unsavedDice []die
+	for i, d := range p.Dice {
+		if d.Committed {
+			continue
+		}
 
-	for i, userDie := range userDice {
-		if userDie.Saved {
+		if d.Saved {
 			log.Printf("User '%s' saved die %d value %d", p.Name, i, userDie.Value)
 			p.Dice[i].Committed = true
-			p.Dice[i].Saved = true
-		}
-	}
-
-	for i, _ := range p.Dice {
-		if !p.Dice[i].Committed {
+			committedDice = append(committedDice, d)
+		} else {
 			p.Dice[i].Value = int(rand.Int31n(6) + 1)
+			uncommittedDice = append(uncommittedDice, d)
 		}
 	}
 
-	score := evaluateScore(p.Dice, &output)
+	p.PotentialScore = evaluateScore(committedDice, &output)
+
+	score = evaluateScore(uncommittedDice, &output)
 	if score == 0 {
 		p.PotentialScore = 0
 		log.Print("Farkle!")
 		p.Scored = true
-	} else {
-		p.PotentialScore += score
 	}
 
 	//log.Printf("Player rolled dice: %v", p.Dice)
@@ -283,7 +284,15 @@ func scoreHandler(w http.ResponseWriter, req *http.Request, params httprouter.Pa
 		return
 	}
 
-	score := evaluateScore(p.Dice, &output)
+	var committedDice []die
+
+	for _, d := range p.Dice {
+		if d.Committed {
+			committedDice = append(committedDice, d)
+		}
+	}
+
+	score := evaluateScore(committedDice, &output)
 	if score == 0 {
 		p.PotentialScore = 0
 	} else {
