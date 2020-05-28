@@ -6,6 +6,8 @@ import (
 	"log"
 	"math/rand"
 	"net/http"
+	"os"
+	"time"
 
 	"github.com/google/uuid"
 
@@ -60,6 +62,8 @@ func gameStateProcessor() {
 	g.setPlayerChan = make(chan *player, 10)
 	g.getPlayerChan = make(chan playerReq, 10)
 
+	saveTicker := time.NewTicker(time.Second * 10)
+
 	for {
 		select {
 		case preq := <-g.getPlayerChan:
@@ -90,6 +94,13 @@ func gameStateProcessor() {
 				}
 			}
 			g.Players = append(g.Players, p)
+		case <-saveTicker.C:
+			f, err := os.OpenFile("gameState.json", os.O_CREATE|os.O_WRONLY|os.O_TRUNC, perm)
+			if err != nil {
+				log.Print(err)
+				continue
+			}
+
 		}
 	}
 }
@@ -278,8 +289,7 @@ func scoreHandler(w http.ResponseWriter, req *http.Request, params httprouter.Pa
 	} else {
 		p.Score += p.PotentialScore + score
 		p.PotentialScore = 0
-		log.Printf("User '%s' scored %d, score is now %d", p.Name, p.PotentialScore, p.Score)
-
+		log.Printf("User '%s' scored %d, score is now %d", p.Name, score, p.Score)
 	}
 
 	for i, _ := range p.Dice {
