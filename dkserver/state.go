@@ -157,49 +157,54 @@ func rollHandler(w http.ResponseWriter, req *http.Request, params httprouter.Par
 			Domain: req.URL.Hostname(),
 		}
 		http.SetCookie(w, cookie)
+
+		for i, d := range p.Dice {
+			p.Dice[i].Value = int(rand.Int31n(6) + 1)
+		}
+
 		//log.Printf("New player session UUID: %s", p.SessionUUID)
 	} else {
 		//log.Printf("Found existing player %v", p.SessionUUID)
-	}
 
-	userDice := []die{}
+		userDice := []die{}
 
-	jsonBytes, err := ioutil.ReadAll(req.Body)
-	if err != nil {
-		log.Print(err)
-		return
-	}
-
-	err = json.Unmarshal(jsonBytes, &userDice)
-	if err != nil {
-		log.Print(err)
-		return
-	}
-
-	var committedDice []die
-	var uncommittedDice []die
-	for i, d := range p.Dice {
-		if d.Committed {
-			continue
+		jsonBytes, err := ioutil.ReadAll(req.Body)
+		if err != nil {
+			log.Print(err)
+			return
 		}
 
-		if d.Saved {
-			log.Printf("User '%s' saved die %d value %d", p.Name, i, d.Value)
-			p.Dice[i].Committed = true
-			committedDice = append(committedDice, d)
-		} else {
-			p.Dice[i].Value = int(rand.Int31n(6) + 1)
-			uncommittedDice = append(uncommittedDice, d)
+		err = json.Unmarshal(jsonBytes, &userDice)
+		if err != nil {
+			log.Print(err)
+			return
 		}
-	}
 
-	p.PotentialScore = evaluateScore(committedDice, &output)
+		var committedDice []die
+		var uncommittedDice []die
+		for i, d := range p.Dice {
+			if d.Committed {
+				continue
+			}
 
-	score := evaluateScore(uncommittedDice, &output)
-	if score == 0 {
-		p.PotentialScore = 0
-		log.Print("Farkle!")
-		p.Scored = true
+			if d.Saved {
+				log.Printf("User '%s' saved die %d value %d", p.Name, i, d.Value)
+				p.Dice[i].Committed = true
+				committedDice = append(committedDice, d)
+			} else {
+				p.Dice[i].Value = int(rand.Int31n(6) + 1)
+				uncommittedDice = append(uncommittedDice, d)
+			}
+		}
+
+		p.PotentialScore += evaluateScore(committedDice, &output)
+
+		score := evaluateScore(uncommittedDice, &output)
+		if score == 0 {
+			p.PotentialScore = 0
+			log.Print("Farkle!")
+			p.Scored = true
+		}
 	}
 
 	//log.Printf("Player rolled dice: %v", p.Dice)
