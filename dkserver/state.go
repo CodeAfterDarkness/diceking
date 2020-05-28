@@ -158,7 +158,7 @@ func rollHandler(w http.ResponseWriter, req *http.Request, params httprouter.Par
 		}
 		http.SetCookie(w, cookie)
 
-		for i, d := range p.Dice {
+		for i, _ := range p.Dice {
 			p.Dice[i].Value = int(rand.Int31n(6) + 1)
 		}
 
@@ -215,7 +215,7 @@ func rollHandler(w http.ResponseWriter, req *http.Request, params httprouter.Par
 	}
 
 	log.Printf("Player messages: %v", output)
-	jsonBytes, err = json.Marshal(resp)
+	jsonBytes, err := json.Marshal(resp)
 	if err != nil {
 		log.Print(err)
 		w.WriteHeader(http.StatusInternalServerError)

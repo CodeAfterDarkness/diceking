@@ -21,25 +21,26 @@ func evaluateScore(dice []die, output *[]string) int {
 		return score
 	}
 
-	if len(dice) == 6 {
-		matches := []int{0, 0, 0, 0, 0, 0}
-		for i, dieA := range dice {
-			if matches[dieA.Value-1] > 0 {
-				continue
-			}
+	matches := []int{0, 0, 0, 0, 0, 0}
+	for i, dieA := range dice {
+		if dieA.Value == 0 {
 
-			// if i == 6 {
-			// 	continue
-			// }
-			for j, dieB := range dice[i+1:] {
-				j = j + i + 1
+		}
+		if matches[dieA.Value-1] > 0 {
+			continue
+		}
 
-				if dieA.Value == dieB.Value {
-					if matches[dieA.Value-1] == 0 {
-						matches[dieA.Value-1] = 2
-					} else {
-						matches[dieA.Value-1]++
-					}
+		// if i == 6 {
+		// 	continue
+		// }
+		for j, dieB := range dice[i+1:] {
+			j = j + i + 1
+
+			if dieA.Value == dieB.Value {
+				if matches[dieA.Value-1] == 0 {
+					matches[dieA.Value-1] = 2
+				} else {
+					matches[dieA.Value-1]++
 				}
 			}
 		}
